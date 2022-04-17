@@ -1,0 +1,76 @@
+{
+  "project_info": {
+    "project_number": "125262523592",
+    "project_id": "capstonedisign",
+    "storage_bucket": "capstonedisign.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:125262523592:android:3f2d62dae6702d44a349fd",
+        "android_client_info": {
+          "package_name": "com.example.capstonedesign"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "125262523592-gf8huap6p32skmqvrcvsk9nkbo6d4de2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjsQ_aEwzoERiXawwkIyCePWf2a0K44sA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "125262523592-gf8huap6p32skmqvrcvsk9nkbo6d4de2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:125262523592:android:e1507d99c48f8db3a349fd",
+        "android_client_info": {
+          "package_name": "com.example.personalcolor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "125262523592-itut1eei0j2164uibe3i3icr9ro0rt0b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.personalcolor",
+            "certificate_hash": "2b17f978466c737f25f0afcfcbd21544db7bbac7"
+          }
+        },
+        {
+          "client_id": "125262523592-gf8huap6p32skmqvrcvsk9nkbo6d4de2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjsQ_aEwzoERiXawwkIyCePWf2a0K44sA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "125262523592-gf8huap6p32skmqvrcvsk9nkbo6d4de2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
