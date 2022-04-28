@@ -34,7 +34,6 @@ android {
     externalNativeBuild {
         ndkBuild {
             path file('src/main/jni/Android.mk')
-            version '3.18.1'
         }
     }
 }
