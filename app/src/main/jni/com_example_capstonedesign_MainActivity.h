@@ -69,11 +69,11 @@ extern "C" {
 #define com_example_capstonedesign_MainActivity_RESULT_OK -1L
 /*
  * Class:     com_example_capstonedesign_MainActivity
- * Method:    print_ndk
- * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ * Method:    printOpenCV_version
+ * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_example_capstonedesign_MainActivity_print_1ndk
-  (JNIEnv *, jobject, jstring);
+JNIEXPORT jstring JNICALL Java_com_example_capstonedesign_MainActivity_printOpenCV_1version
+  (JNIEnv *, jobject);
 
 #ifdef __cplusplus
 }
