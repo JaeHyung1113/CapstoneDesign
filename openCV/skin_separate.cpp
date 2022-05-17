@@ -1,19 +1,17 @@
-#include<opencv2/opencv.hpp>
-
-using namespace std;
-using namespace cv;
+#include"preprocess.h"
 
 
 VideoCapture capture;
 
 Mat skin(Mat frame) {
 
-	Mat dst, skin;
-	cvtColor(frame, dst, COLOR_BGR2YCrCb);
+	Mat dst, return_skin;
+	cvtColor(frame, dst, COLOR_BGR2YCrCb);  //ycrcb 색채 이론이 조도에 대한 민감도가 제일 둔해서 이걸로 사용
+											//결과 영상도 제일 깔끔하게 나오는 듯
 	//skin.convertTo(skin, CV_8UC3);
-	inRange(dst, Scalar(0,133,77), Scalar(255,173,127), dst);
-	skin = (dst.size(), CV_8UC3, Scalar(0));
-	add(frame, Scalar(0), skin, dst);
+	inRange(dst, Scalar(0,133,77), Scalar(255,173,127), dst); //YCrCb에서 사람 피부의 영역  Y=0~255, Cr=133~173, Cb= 77~127
+	return_skin = (dst.size(), CV_8UC3, Scalar(0));
+	add(frame, Scalar(0), return_skin, dst);
 	//skin.convertTo(skin, CV_8UC3);
 	//vector<Mat>hls_video(3);
 	//split(hlsImg, hls_image);
@@ -43,7 +41,7 @@ Mat skin(Mat frame) {
 	//		}
 	//	}
 	//}
-	return skin;
+	return return_skin;
 }
 int main() {
 	capture.open(0);
