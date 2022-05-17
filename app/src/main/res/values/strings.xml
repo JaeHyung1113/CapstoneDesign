@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">CapstoneDesign</string>
+    <!--네이티브 앱 키 -->
+    <string name="kakao_app_key">ba1449e3e5fea0bbaac66d4dc76a7060</string>
 </resources>

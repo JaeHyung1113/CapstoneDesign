@@ -1,9 +1,12 @@
 buildscript {
     repositories {
         google()
+        // 카카오 SDK Repository 설정
+        maven { url 'https://devrepo.kakao.com/nexus/content/groups/public/'}
     }
     dependencies {
         classpath 'com.google.gms:google-services:4.3.10'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21' // 코틀린
     }
 }// Top-level build file where you can add configuration options common to all sub-projects/modules.
 
