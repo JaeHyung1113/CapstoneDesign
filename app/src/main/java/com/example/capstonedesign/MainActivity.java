@@ -1,5 +1,7 @@
 package com.example.capstonedesign;
 
+import static android.Manifest.permission.CAMERA;
+
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,7 +15,6 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,8 +27,6 @@ import org.opencv.core.Mat;
 
 import java.util.Collections;
 import java.util.List;
-
-import static android.Manifest.permission.CAMERA;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private static final String TAG = "OpenCV";
@@ -130,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         return Collections.singletonList(mOpenCvCameraView);
     }
 
-    private static final int CAMERA_PERMISSION_REQUEST_CODE = 222;
+    private static final int CAMERA_PERMISSION_REQUEST_CODE = 803;
 
     protected void onCameraPermissionGranted() {
         List<? extends CameraBridgeViewBase> cameraViews = getCameraViewList();
