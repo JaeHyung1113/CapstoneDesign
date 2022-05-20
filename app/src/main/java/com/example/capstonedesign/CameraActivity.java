@@ -118,7 +118,7 @@ public class CameraActivity extends AppCompatActivity {
             if (allPermissionsGranted()) {
                 startCamera();
             } else {
-                //권한이 없을 경우 처리10
+                //권한이 없을 경우 처리
                 Toast.makeText(this, "권한이 없습니다.", Toast.LENGTH_SHORT).show();
                 this.finish();
             }
