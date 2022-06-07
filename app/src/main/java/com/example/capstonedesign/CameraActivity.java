@@ -1,256 +1,197 @@
 package com.example.capstonedesign;
 
-import android.Manifest;
-import android.content.Context;
+import static android.Manifest.permission.CAMERA;
+
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.SurfaceTexture;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CameraMetadata;
-import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.ImageReader;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.util.Size;
-import android.util.SparseIntArray;
-import android.view.Surface;
-import android.view.TextureView;
-import android.widget.Toast;
+import android.provider.Settings;
+import android.util.Log;
+import android.view.SurfaceView;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import java.io.File;
-import java.util.Arrays;
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.JavaCamera2View;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
 
-public class CameraActivity extends AppCompatActivity {
-    // 권한 관련 변수
-    private int REQUEST_CODE_PERMISSIONS = 803;
-    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
+import java.util.Collections;
+import java.util.List;
 
-    // 화면 각도
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+public class CameraActivity extends AppCompatActivity implements JavaCamera2View.CvCameraViewListener2 {
+
+    private static final String TAG = "OpenCV";
+    private Mat matInput;
+    private Mat matResult;
+
+    private CameraBridgeViewBase mOpenCvCameraView;
+
+
+    public native void test(long matAddrInput, long matAddrResult);
+
+
     static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+        System.loadLibrary("opencv_java4");
+        System.loadLibrary("test");
     }
-    // 카메라2 변수
-    private String cameraId;
-    private CameraDevice cameraDevice;
-    private CameraCaptureSession cameraCaptureSession;
-    private CaptureRequest captureRequest;
-    private CaptureRequest.Builder captureRequestBuilder;
 
-    // 이미지 저장 변수
-    private Size imageDimensions;
-    private ImageReader imageReader;
-    private File file;
-    private Handler mBackgroundHandler;
-    private HandlerThread mBackgroundThread;
 
-    // 뷰 객체
-    private TextureView textureView;
-
-//    public native void test(long matAddrInput, long matAddrResult);
-//
-//
-//    static {
-//        System.loadLibrary("opencv_java4");
-//        System.loadLibrary("test");
-//    }
-
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS: {
+                    mOpenCvCameraView.enableView();
+                }
+                break;
+                default: {
+                    super.onManagerConnected(status);
+                }
+                break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         ActionBar actionBar = getSupportActionBar();
         actionBar.hide();
-        setContentView(R.layout.activity_camera);
-        textureView = findViewById(R.id.textureView);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        if (allPermissionsGranted()) {
-            startCamera();
-        } else {
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
-        }
-    }
+        setContentView(R.layout.activity_camera3);
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        startBackgroundThread();
-        if(textureView.isAvailable()) {
-            try {
-                openCamera();
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
-        } else {
-            textureView.setSurfaceTextureListener(textureListener);
-        }
+        mOpenCvCameraView = (JavaCamera2View) findViewById(R.id.activity_surface_view);
+        mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
+        mOpenCvCameraView.setCvCameraViewListener(this);
+        mOpenCvCameraView.setCameraIndex(1); // front-camera(1),  back-camera(0)
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        try{
-            stopBackgroundThread();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (mOpenCvCameraView != null) mOpenCvCameraView.disableView();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!OpenCVLoader.initDebug()) {
+            Log.d(TAG, "onResume -> 내부 OpenCV 라이브러리를 찾을 수 없습니다.");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, mLoaderCallback);
+        } else {
+            Log.d(TAG, " onResume -> OpenCV 라이브러리를 찾아서 사용합니다. ");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mOpenCvCameraView != null) {
+            mOpenCvCameraView.disableView();
+        }
+    }
+
+    @Override
+    public void onCameraViewStarted(int width, int height) {
+
+    }
+
+    @Override
+    public void onCameraViewStopped() {
+
+    }
+
+    @Override
+    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+        matInput = inputFrame.rgba();
+
+        if (matResult == null)
+            matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
+        test(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        return matInput;
+    }
+
+    protected List<? extends CameraBridgeViewBase> getCameraViewList() {
+        return Collections.singletonList(mOpenCvCameraView);
+    }
+
+    private static final int CAMERA_PERMISSION_REQUEST_CODE = 803;
+
+    protected void onCameraPermissionGranted() {
+        List<? extends CameraBridgeViewBase> cameraViews = getCameraViewList();
+        if (cameraViews == null) {
+            return;
+        }
+        for (CameraBridgeViewBase cameraBridgeViewBase : cameraViews) {
+            if (cameraBridgeViewBase != null) {
+                cameraBridgeViewBase.setCameraPermissionGranted();
+            }
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        boolean havePermission = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+                havePermission = false;
+            }
+        }
+        if (havePermission) {
+            onCameraPermissionGranted();
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) {
-                startCamera();
-            } else {
-                //권한이 없을 경우 처리
-                Toast.makeText(this, "권한이 없습니다.", Toast.LENGTH_SHORT).show();
-                this.finish();
-            }
-        }
-    }
-
-    private boolean allPermissionsGranted() {
-        for (String permission : REQUIRED_PERMISSIONS) {
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                return false;
-            }
-        }
-        return true;
-    }
-    private void startBackgroundThread() {
-        mBackgroundThread = new HandlerThread("Camera Background");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
-    }
-    private void startCamera() {
-        // 텍스쳐뷰에 리스너를 붙임
-        textureView.setSurfaceTextureListener(textureListener);
-    }
-    private TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
-        // 텍스쳐뷰가 준비되면 openCamera() 호출
-        @Override
-        public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surfaceTexture, int i, int i1) {
-            try{
-                openCamera();
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surfaceTexture, int i, int i1) {
-
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surfaceTexture) {
-            return false;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surfaceTexture) {
-
-        }
-    };
-    private void openCamera() throws CameraAccessException {
-        // 카메라를 다루는 매니저 생성
-        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-        // 매니저를 객체를 이용하여 카메라 ID 리스트를 얻어와서 카메라를 얻어옴
-        cameraId = manager.getCameraIdList()[0]; // ID 배열 0번 후면, 1번 전면
-        // 위에서 얻어온 ID를 바탕으로 카메라의 정보를 가지는 CameraCharacteristics 객체 반환
-        CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-        /* characteristics.get(characteristics.LENS_FACING) 해당 카메라의 종류를 얻어옴
-        * LENS_FACING_FRONT: 전면 카메라, value: 0
-        * LENS_FACING_BACK: 후면 카메라, value: 1
-        * LENS_FACING_EXTERNAL: 기타 카메라, value: 2 */
-        // 카메라의 각종 지원 정보
-        StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-        imageDimensions = map.getOutputSizes(SurfaceTexture.class)[0];
-
-        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            manager.openCamera(cameraId, stateCallback, null);
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            onCameraPermissionGranted();
         } else {
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
+            showDialogForPermission("앱 실행을 위한 권한이 필요합니다.");
         }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
-    private void createCameraPreview() throws CameraAccessException {
-        SurfaceTexture texture = textureView.getSurfaceTexture();
-        texture.setDefaultBufferSize(imageDimensions.getWidth(), imageDimensions.getHeight());
-        Surface surface = new Surface(texture);
 
-        captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-        captureRequestBuilder.addTarget(surface);
-
-        cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
+    private void showDialogForPermission(String msg) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("알림"); // 타이틀 설정
+        builder.setMessage(msg); // 메시지 설정
+        builder.setCancelable(false); // 대화창 이외의 공간 터치 시 무시
+        builder.setPositiveButton("예", new DialogInterface.OnClickListener() {
             @Override
-            public void onConfigured(@NonNull CameraCaptureSession session) {
-               if(cameraDevice==null){
-                   return;
-               }
-               cameraCaptureSession = session;
-               try{
-                   updatePreview();
-               } catch (CameraAccessException e) {
-                   e.printStackTrace();
-               }
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Intent appDetail = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:" + getPackageName()));
+                appDetail.addCategory(Intent.CATEGORY_DEFAULT);
+                appDetail.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(appDetail);
             }
-
+        });
+        builder.setNegativeButton("아니오", new DialogInterface.OnClickListener() {
             @Override
-            public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                Toast.makeText(getApplicationContext(), "Configuration Changed", Toast.LENGTH_LONG).show();
+            public void onClick(DialogInterface dialogInterface, int i) {
+                finish();
             }
-        }, null);
-
+        });
+        builder.create().show();
     }
-    private  void updatePreview() throws CameraAccessException {
-        if(cameraDevice == null) {
-            return;
-        }
-        captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-        cameraCaptureSession.setRepeatingRequest(captureRequestBuilder.build(), null, mBackgroundHandler);
-    }
-    protected void stopBackgroundThread() throws InterruptedException {
-        mBackgroundThread.quitSafely();
-        mBackgroundThread.join();
-        mBackgroundThread = null;
-        mBackgroundHandler = null;
-    }
-
-    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
-        @Override
-        public void onOpened(@NonNull CameraDevice camera) {
-            cameraDevice = camera;
-            try {
-                createCameraPreview();
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onDisconnected(@NonNull CameraDevice cameraDevice) {
-            cameraDevice.close();
-        }
-
-        @Override
-        public void onError(@NonNull CameraDevice cameraDevice, int i) {
-            cameraDevice.close();
-        }
-    };
 }

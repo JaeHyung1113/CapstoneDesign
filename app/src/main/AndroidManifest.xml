@@ -23,12 +23,14 @@
         <meta-data
             android:name="com.kakao.sdk.AppKey"
             android:value="@string/kakao_app_key"></meta-data>
+        <activity android:name=".Camera2Activity"></activity>
+        <activity android:name=".CameraActivity"></activity>
+        <activity android:name=".Camera3Activity"></activity>
         <activity
-            android:name=".CameraActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
                 <data
                     android:host="oauth"
