@@ -24,14 +24,17 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCamera2View;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Vector;
 
 public class CameraActivity extends AppCompatActivity implements JavaCamera2View.CvCameraViewListener2 {
 
-    private static final String TAG = "OpenCV";
+    private static final String TAG = "CameraActivity";
     private Mat matInput;
     private Mat matResult;
 
@@ -74,7 +77,7 @@ public class CameraActivity extends AppCompatActivity implements JavaCamera2View
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        setContentView(R.layout.activity_camera3);
+        setContentView(R.layout.activity_camera);
 
         mOpenCvCameraView = (JavaCamera2View) findViewById(R.id.activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -125,7 +128,13 @@ public class CameraActivity extends AppCompatActivity implements JavaCamera2View
         if (matResult == null)
             matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
         test(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
-        return matInput;
+//        List<Mat> rgba = new ArrayList<Mat>();
+//        Core.split(matInput, rgba);
+//        Mat r = rgba.get(0);
+//        Mat g = rgba.get(1);
+//        Mat b = rgba.get(2);
+//        Mat a = rgba.get(3);
+        return matResult;
     }
 
     protected List<? extends CameraBridgeViewBase> getCameraViewList() {
