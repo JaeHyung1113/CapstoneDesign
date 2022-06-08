@@ -123,18 +123,16 @@ public class CameraActivity extends AppCompatActivity implements JavaCamera2View
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+
         matInput = inputFrame.rgba();
+
+        test(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
 
         if (matResult == null)
             matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
-        test(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
-//        List<Mat> rgba = new ArrayList<Mat>();
-//        Core.split(matInput, rgba);
-//        Mat r = rgba.get(0);
-//        Mat g = rgba.get(1);
-//        Mat b = rgba.get(2);
-//        Mat a = rgba.get(3);
+
         return matResult;
+
     }
 
     protected List<? extends CameraBridgeViewBase> getCameraViewList() {

@@ -82,7 +82,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
 
         mMatrix.reset();
         if (isFrontCamera) {
-            mMatrix.preScale(1, 1, hw, hh);
+            mMatrix.setScale(-1,1);
         }
         mMatrix.preTranslate(hw, hh);
         if (isFrontCamera) {
@@ -93,8 +93,6 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
         mMatrix.preTranslate(-hw, -hh);
         mMatrix.preScale(scale, scale, hw, hh);
     }
-
-    ;
 
     @Override
     public void layout(int l, int t, int r, int b) {

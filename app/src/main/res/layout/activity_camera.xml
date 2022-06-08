@@ -5,14 +5,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".Camera2Activity">
+    tools:context=".CameraActivity">
 
     <org.opencv.android.JavaCamera2View
+        android:id="@+id/activity_surface_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        opencv:camera_id="any"
         android:visibility="gone"
-        android:id="@+id/activity_surface_view" />
+        opencv:camera_id="any" />
 
 </LinearLayout>
