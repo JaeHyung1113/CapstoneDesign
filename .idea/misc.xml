@@ -3,10 +3,15 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/activity_camera.xml" value="0.2552083333333333" />
+        <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/activity_camera.xml" value="0.224609375" />
+        <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/activity_camera2.xml" value="0.36614583333333334" />
+        <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/activity_camera3.xml" value="0.1" />
         <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/activity_login.xml" value="0.33" />
         <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/activity_main.xml" value="0.25" />
+        <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/activity_result.xml" value="0.225" />
+        <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/attrs.xml" value="0.36614583333333334" />
         <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/layout.xml" value="0.11388888888888889" />
+        <entry key="..\:/Users/hwc11/AndroidStudioProjects/CapstoneDesign/app/src/main/res/xml/file_paths.xml" value="0.287962962962963" />
         <entry key="..\:/Users/jcom/AndroidStudioProjects/CapstoneDesign/app/src/main/res/layout/activity_main.xml" value="0.3491847826086957" />
       </map>
     </option>
