@@ -5,6 +5,7 @@ import static android.Manifest.permission.CAMERA;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,29 +25,34 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCamera2View;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 public class CameraActivity extends AppCompatActivity implements JavaCamera2View.CvCameraViewListener2 {
 
     private static final String TAG = "CameraActivity";
+
+
     private Mat matInput;
     private Mat matResult;
 
     private CameraBridgeViewBase mOpenCvCameraView;
 
 
-    public native void test(long matAddrInput, long matAddrResult);
+    public native void test(long cascadeClassifier_face, long matAddrInput, long matAddrResult);
 
+    //public native long loadCascade(String cascadeFileName );
+    public long cascadeClassifier_face = 0;
 
     static {
         System.loadLibrary("opencv_java4");
-        System.loadLibrary("test");
+//        System.loadLibrary("test");
     }
 
 
@@ -126,12 +132,15 @@ public class CameraActivity extends AppCompatActivity implements JavaCamera2View
 
         matInput = inputFrame.rgba();
 
-        test(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
 
         if (matResult == null)
             matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
 
-        return matResult;
+        // test(,matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+/*        Mat dst;
+        dst = matResult;*/
+
+        return matInput;
 
     }
 
@@ -139,7 +148,6 @@ public class CameraActivity extends AppCompatActivity implements JavaCamera2View
         return Collections.singletonList(mOpenCvCameraView);
     }
 
-    private static final int CAMERA_PERMISSION_REQUEST_CODE = 803;
 
     protected void onCameraPermissionGranted() {
         List<? extends CameraBridgeViewBase> cameraViews = getCameraViewList();
@@ -149,56 +157,47 @@ public class CameraActivity extends AppCompatActivity implements JavaCamera2View
         for (CameraBridgeViewBase cameraBridgeViewBase : cameraViews) {
             if (cameraBridgeViewBase != null) {
                 cameraBridgeViewBase.setCameraPermissionGranted();
+
+                read_cascade_file();
             }
         }
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        boolean havePermission = true;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
-                havePermission = false;
+    private void copyFile(String filename) {
+
+        AssetManager assetManager = this.getAssets();
+        File outputFile = new File(getFilesDir() + "/" + filename);
+
+        InputStream inputStream = null;
+        OutputStream outputStream = null;
+
+        try {
+            Log.d(TAG, "copyFile :: 다음 경로로 파일복사 " + outputFile.toString());
+            inputStream = assetManager.open(filename);
+            outputStream = new FileOutputStream(outputFile);
+
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
             }
+            inputStream.close();
+            inputStream = null;
+            outputStream.flush();
+            outputStream.close();
+            outputStream = null;
+        } catch (Exception e) {
+            Log.d(TAG, "copyFile :: 파일 복사 중 예외 발생 " + e.toString());
         }
-        if (havePermission) {
-            onCameraPermissionGranted();
-        }
+
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            onCameraPermissionGranted();
-        } else {
-            showDialogForPermission("앱 실행을 위한 권한이 필요합니다.");
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
+    private void read_cascade_file() {
+        copyFile("haarcascade_frontalface_alt2.xml\"");
+        Log.d(TAG, "read_cascade_file");
 
-    private void showDialogForPermission(String msg) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("알림"); // 타이틀 설정
-        builder.setMessage(msg); // 메시지 설정
-        builder.setCancelable(false); // 대화창 이외의 공간 터치 시 무시
-        builder.setPositiveButton("예", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                Intent appDetail = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                        Uri.parse("package:" + getPackageName()));
-                appDetail.addCategory(Intent.CATEGORY_DEFAULT);
-                appDetail.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(appDetail);
-            }
-        });
-        builder.setNegativeButton("아니오", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                finish();
-            }
-        });
-        builder.create().show();
+        //cascadeClassifier_face = loadCascade( getFilesDir().getAbsolutePath() + "/haarcascade_frontalface_alt.xml");
+        Log.d(TAG, "read_cascade_file:");
     }
 }
+

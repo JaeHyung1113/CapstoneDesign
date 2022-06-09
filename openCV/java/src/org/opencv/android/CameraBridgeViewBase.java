@@ -62,37 +62,16 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
     private final Matrix mMatrix = new Matrix();
 
     private void updateMatrix() {
-
-        float mw = this.getWidth();
-        float mh = this.getHeight();
-
         float hw = this.getWidth() / 2.0f;
         float hh = this.getHeight() / 2.0f;
-
-        float cw = (float) Resources.getSystem().getDisplayMetrics().widthPixels;
-        float ch = (float) Resources.getSystem().getDisplayMetrics().heightPixels;
-
-        float scale = cw / (float) mh;
-        float scale2 = ch / (float) mw;
-        if (scale2 > scale) {
-            scale = scale2;
-        }
-
-        boolean isFrontCamera = mCameraIndex == CAMERA_ID_FRONT;
-
         mMatrix.reset();
-        if (isFrontCamera) {
-            mMatrix.setScale(-1,1);
-        }
-        mMatrix.preTranslate(hw, hh);
-        if (isFrontCamera) {
-            mMatrix.preRotate(90);
-        } else {
-            mMatrix.preRotate(270);
-        }
+
+        mMatrix.preScale(-1,1); // 좌우 반전
         mMatrix.preTranslate(-hw, -hh);
-        mMatrix.preScale(scale, scale, hw, hh);
+        mMatrix.postRotate(90); // 회전
+        mMatrix.postTranslate(getWidth() / 2, getHeight() / 2);
     }
+
 
     @Override
     public void layout(int l, int t, int r, int b) {
