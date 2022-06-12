@@ -72,8 +72,6 @@ extern "C" {
  * Method:    printOpenCV_version
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_example_capstonedesign_MainActivity_printOpenCV_1version
-  (JNIEnv *, jobject);
 
 #ifdef __cplusplus
 }

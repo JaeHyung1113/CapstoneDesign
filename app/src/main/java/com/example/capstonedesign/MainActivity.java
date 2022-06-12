@@ -10,10 +10,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
@@ -27,11 +34,17 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -49,7 +62,17 @@ public class MainActivity extends AppCompatActivity {
     Button capture;
     Button test;
 
+    ImageView imageView;
 
+    private Mat matInput;
+    private Mat matResult;
+
+    static {
+        System.loadLibrary("detect_skin");
+    }
+    public native long loadCascade(String cascadeFileName);
+    public native void detectSkin(long cascadeClassifier_face, long addrInputImage, long addrResultImage);
+    public long cascadeClassifier_face = 0;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -57,6 +80,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         permissionCheck();
+
+        imageView = findViewById(R.id.imageView);
+        imageView.setVisibility(View.INVISIBLE);
 
         test = (Button) findViewById(R.id.btn_test);
         test.setOnClickListener(new View.OnClickListener() {
@@ -77,13 +103,43 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        check = (Button) findViewById(R.id.btn_check);
+        check.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                read_cascade_file();
+                // imageView의 resource를 bitmap으로 가져옴
+                BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
+                Bitmap bitmap = drawable.getBitmap();
+
+                int w = bitmap.getWidth();
+                int h = bitmap.getHeight();
+
+                Bitmap resize = bitmap.createScaledBitmap(bitmap, w / 4, h / 4, true);
+
+                matInput = new Mat();
+                Utils.bitmapToMat(resize, matInput);
+
+                if (matResult == null)
+                    matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
+
+                detectSkin(cascadeClassifier_face, matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+
+                Utils.matToBitmap(matResult, resize);
+
+                imageView.setImageBitmap(resize);
+
+                Log.i("Image_Info: ", "width: " + resize.getWidth() + " height: " + resize.getHeight());
+            }
+        });
+        check.setVisibility(View.INVISIBLE);
     }
 
     private void permissionCheck() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             permission = new MultiplePermission(this, this);
         }
-        if(!permission.checkPermission()) {
+        if (!permission.checkPermission()) {
             permission.requestPermission();
         }
     }
@@ -100,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             File imageFile = createImageFile();
-            if(imageFile != null) {
+            if (imageFile != null) {
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentPhotoUri);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             }
@@ -116,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
         File storageDir = getExternalFilesDir("CapstoneDesign/");
 
         // 파일 생성
-        File newFile = File.createTempFile(imageFileName, ".jpg", storageDir );
+        File newFile = File.createTempFile(imageFileName, ".jpg", storageDir);
 
         currentPhotoFile = newFile;
         currentPhotoFileName = newFile.getName();
@@ -137,25 +193,30 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        ImageView imageView = findViewById(R.id.imageView);
+
 
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
 
-            if(currentPhotoFile != null) {
+            if (currentPhotoFile != null) {
                 imageView.setImageURI(currentPhotoUri);
+                imageView.setVisibility(View.VISIBLE);
+                check.setVisibility(View.VISIBLE);
+
                 // 갤러리에 이미지 파일 생성
-              //  galleryAddPic(currentPhotoUri, currentPhotoFileName);
+                galleryAddPic(currentPhotoUri, currentPhotoFileName);
+
             }
         }
     }
-    private Uri galleryAddPic(Uri srcImageFileUri ,String srcImageFileName) {
-        ContentValues contentValues = new ContentValues();
+
+    private Uri galleryAddPic(Uri srcImageFileUri, String srcImageFileName) {
+        ContentValues contentValues = new ContentValues(); //  ContentResolver가 처리할 수 있는 값 집합을 저장하는 데 사용
         ContentResolver contentResolver = getApplicationContext().getContentResolver();
         contentValues.put(MediaStore.Images.Media.DISPLAY_NAME, srcImageFileName);
         contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-        contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "DCIM/MyImages"); // 두개의 경로[DCIM/ , Pictures/]만 가능함 , 생략시 Pictures/ 에 생성됨
-        contentValues.put(MediaStore.Images.Media.IS_PENDING, 1); //다른앱이 파일에 접근하지 못하도록 함(Android 10 이상)
-        Uri newImageFileUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,contentValues);
+        contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CapstoneDesign");
+        contentValues.put(MediaStore.Images.Media.IS_PENDING, 1);
+        Uri newImageFileUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
 
         try {
             AssetFileDescriptor afdInput = contentResolver.openAssetFileDescriptor(srcImageFileUri, "r");
@@ -164,12 +225,12 @@ public class MainActivity extends AppCompatActivity {
             FileOutputStream fos = afdOutput.createOutputStream();
 
             byte[] readByteBuf = new byte[1024];
-            while(true){
+            while (true) {
                 int readLen = fis.read(readByteBuf);
                 if (readLen <= 0) {
                     break;
                 }
-                fos.write(readByteBuf,0,readLen);
+                fos.write(readByteBuf, 0, readLen);
             }
 
             fos.flush();
@@ -188,5 +249,108 @@ public class MainActivity extends AppCompatActivity {
         contentValues.put(MediaStore.Images.Media.IS_PENDING, 0); //다른앱이 파일에 접근할수 있도록 함
         contentResolver.update(newImageFileUri, contentValues, null, null);
         return newImageFileUri;
+    }
+
+    private Bitmap createSampledBitmap(Uri srcImageFileUri, int dstWidth, int dstHeight) {
+
+        ContentResolver contentResolver = getApplicationContext().getContentResolver();
+        ParcelFileDescriptor pfdExif = null;
+        int orientation = 0;
+        try {
+            pfdExif = contentResolver.openFileDescriptor(srcImageFileUri, "r");
+            FileDescriptor fdExif = pfdExif.getFileDescriptor();
+            ExifInterface exifInterface = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                exifInterface = new ExifInterface(fdExif); //Android 7.0(API level 24) 이상에서 사용 가능
+            }
+            orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+            Log.d("orientation", String.valueOf(orientation));
+            pfdExif.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // 축소된 이미지의 비트맵을 생성
+        Bitmap bitmap = createSampledBitmap(srcImageFileUri, dstWidth, dstHeight);
+
+        Matrix matrix = new Matrix();
+
+        switch (orientation) {
+            case ExifInterface.ORIENTATION_NORMAL:
+                return bitmap;
+            case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+                matrix.setScale(-1, 1); //좌우반전
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                matrix.setRotate(180);
+                break;
+            case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+//              matrix.setRotate(180);
+//              matrix.postScale(-1, 1); //좌우반전
+                matrix.setScale(1, -1); //상하반전
+                break;
+            case ExifInterface.ORIENTATION_TRANSPOSE:
+                matrix.setRotate(90);
+                matrix.postScale(-1, 1); //좌우반전
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                matrix.setRotate(90);
+                break;
+            case ExifInterface.ORIENTATION_TRANSVERSE:
+                matrix.setRotate(-90);
+                matrix.postScale(-1, 1); //좌우반전
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                matrix.setRotate(-90);
+                break;
+            default:
+                return bitmap;
+        }
+        try {
+            Bitmap antiRotationBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            bitmap.recycle(); // bitmap은 더이상 필요 없음으로 메모리에서 free시킨다.
+            return antiRotationBitmap;
+        } catch (OutOfMemoryError e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // 외부 저장소에
+    private void copyFile(String filename) {
+
+        AssetManager assetManager = this.getAssets();
+        File outputFile = new File(getFilesDir() + "/" + filename);
+
+        InputStream inputStream = null;
+        OutputStream outputStream = null;
+
+        try {
+            Log.d("Main", "copyFile :: 다음 경로로 파일복사 " + outputFile.toString());
+            inputStream = assetManager.open(filename);
+            outputStream = new FileOutputStream(outputFile);
+
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+            }
+            inputStream.close();
+            inputStream = null;
+            outputStream.flush();
+            outputStream.close();
+            outputStream = null;
+        } catch (Exception e) {
+            Log.d("Main", "copyFile :: 파일 복사 중 예외 발생 " + e.toString());
+        }
+
+    }
+
+    private void read_cascade_file() {
+        copyFile("haarcascade_frontalface_alt2.xml");
+        Log.d("Main", "read_cascade_file");
+        cascadeClassifier_face = loadCascade( getFilesDir().getAbsolutePath() + "/haarcascade_frontalface_alt2.xml");
     }
 }

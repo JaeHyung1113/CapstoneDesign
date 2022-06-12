@@ -45,6 +45,7 @@ set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION ${pathLIBOPENCV_JA
 
 find_library( # Sets the name of the path variable.
         log-lib
+        android-lib android
 
         # Specifies the name of the NDK library that
         # you want CMake to locate.
@@ -57,6 +58,7 @@ find_library( # Sets the name of the path variable.
 target_link_libraries( # Specifies the target library.
         capstonedesign
         lib_opencv
+        $(android-lib)
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib})
