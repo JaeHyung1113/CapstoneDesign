@@ -1,6 +1,6 @@
 plugins {
     id 'com.android.application'
-    id 'com.google.gms.google-services'
+    id 'com.google.gms.google-services' // Firebase
     id 'kotlin-android' // 코틀린
 }
 
@@ -65,7 +65,6 @@ apply plugin: 'com.android.application'
 
 // Add this line
 apply plugin: 'com.google.gms.google-services'
-
 
 dependencies {
 
