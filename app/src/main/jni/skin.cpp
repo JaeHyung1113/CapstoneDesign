@@ -43,6 +43,25 @@ Java_com_example_capstonedesign_MainActivity_loadCascade(JNIEnv *env, jobject th
     return ret;
 
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_capstonedesign_MainActivity_loadImage(JNIEnv *env, jobject thiz,
+                                                       jstring image_file_name, jlong img) {
+
+    Mat &img_input = *(Mat *) img;
+
+    const char *nativeFileNameString = env->GetStringUTFChars(image_file_name, 0);
+
+    string baseDir("");
+    baseDir.append(nativeFileNameString);
+    const char *pathDir = baseDir.c_str();
+
+    img_input = imread(pathDir, IMREAD_COLOR);
+    CV_Assert(img_input.empty());
+
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_capstonedesign_MainActivity_detectSkin(JNIEnv *env, jobject thiz,
@@ -51,7 +70,7 @@ Java_com_example_capstonedesign_MainActivity_detectSkin(JNIEnv *env, jobject thi
                                                         jlong addr_result_image) {
     Mat &matInput = *(Mat *) addr_input_image;
     Mat &matResult = *(Mat *) addr_result_image;
-
+    Mat image_resize;
     Mat bgrImg;
     Mat return_skin;
     Mat dst;
@@ -62,23 +81,24 @@ Java_com_example_capstonedesign_MainActivity_detectSkin(JNIEnv *env, jobject thi
     vector<Mat>hls_image(3);
 
 
-    cvtColor(matInput, bgrImg, COLOR_RGBA2BGR);
+    resize(matInput, image_resize, Size(matInput.size().width / 8, matInput.size().height / 8));
+    __android_log_print(ANDROID_LOG_INFO, "skin :: ", "resize width: %d, resize height: %d", image_resize.size().width, image_resize.size().height);
 
 
-    Mat gray = preprocessing(bgrImg);
+    Mat gray = preprocessing(image_resize);
     vector<Rect>faces;
     ((CascadeClassifier *) cascade_classifier_face)->detectMultiScale( gray, faces, 1.1, 3, 0, Size(100, 100) );
 
-    cvtColor(matInput, dst, COLOR_BGR2YCrCb);
-    inRange(dst, Scalar(0, 128, 73), Scalar(255, 170, 158), dst); //YCrCb에서 사람 피부의 영역  Y=0~255, Cr=133~173, Cb= 77~127
+    cvtColor(image_resize, dst, COLOR_BGR2YCrCb);
+    inRange(dst, Scalar(50, 143, 77), Scalar(255, 173, 173), dst); //YCrCb에서 사람 피부의 영역  Y=0~255, Cr=133~173, Cb= 77~127
     return_skin = (dst.size(), CV_8UC3, Scalar(0));
-    add(matInput, Scalar(0), return_skin, dst);
+    add(image_resize, Scalar(0), return_skin, dst);
     //rectangle(return_skin, faces[0], Scalar(255, 0, 0), 2);
-
+    rectangle(return_skin,faces[0],Scalar(255,0,0),2);
     matResult = return_skin;
 
-    for (int j = 0;j < return_skin.rows; j++) {
-        for (int k = 0;k < return_skin.cols; k++) {
+    for (int j = faces[0].y;j < faces[0].y + faces[0].height;j++) {
+        for (int k = faces[0].x;k < faces[0].x + faces[0].width;k++) {
             split(return_skin, hls_image);
             if (return_skin.at<Vec3b>(j, k)[0] != 0 && return_skin.at<Vec3b>(j, k)[1] != 0 && return_skin.at<Vec3b>(j, k)[2] != 0) {
                 B = return_skin.at<Vec3b>(j, k)[0];
@@ -93,9 +113,13 @@ Java_com_example_capstonedesign_MainActivity_detectSkin(JNIEnv *env, jobject thi
             else continue;
         }
     }
-    C =  255 - (sumR / count);
-    Y =  255 - (sumB / count);
-    M =  255 - (sumG / count);
+    float blue = sumB/count;
+    float green = sumG/count;
+    float red = sumR/count;
+//    float K =
+    C =  (sumR / count);
+    Y =  (sumB / count);
+    M =  (sumG / count);
     __android_log_print(ANDROID_LOG_INFO, "skin :: ", " sumB: %f sumG: %f, sumR: %f, count: %d", sumB, sumG, sumR, count);
     __android_log_print(ANDROID_LOG_INFO, "skin :: ", " C: %f Y: %f M: %f", C, Y, M);
 
