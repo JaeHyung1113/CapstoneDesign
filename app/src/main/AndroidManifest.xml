@@ -30,6 +30,7 @@
             android:name="com.kakao.sdk.AppKey"
             android:value="@string/kakao_app_key"></meta-data>-->
         <activity android:name=".CameraActivity"></activity>
+        <activity android:name=".resultActivity"></activity>
         <!--<activity android:name=".Camera2Activity"></activity>-->
         <!-- <activity android:name=".Camera3Activity"></activity> -->
         <activity
