@@ -9,7 +9,7 @@
     <!-- 이미지 저장 권한 설정 -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- 이미지 읽기 권한 설정-->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <!-- 카메라 하드웨어 기능 사용 설정 -->
     <uses-feature
         android:name="android.hardware.camera.front"
@@ -20,25 +20,28 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_main"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_main_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CapstoneDesign">
-     <!--   <meta-data
-            android:name="com.kakao.sdk.AppKey"
-            android:value="@string/kakao_app_key"></meta-data>-->
+        <!--   <meta-data
+               android:name="com.kakao.sdk.AppKey"
+               android:value="@string/kakao_app_key"></meta-data>-->
         <activity android:name=".CameraActivity"></activity>
         <activity android:name=".resultActivity"></activity>
+        <activity android:name=".MainActivity"></activity>
         <!--<activity android:name=".Camera2Activity"></activity>-->
         <!-- <activity android:name=".Camera3Activity"></activity> -->
         <activity
-            android:name=".MainActivity"
+            android:name=".IntroActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
                 <data
                     android:host="oauth"
                     android:scheme="kakaoba1449e3e5fea0bbaac66d4dc76a7060" />

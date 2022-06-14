@@ -41,11 +41,12 @@
         android:id="@+id/imageView"
         android:layout_width="320dp"
         android:layout_height="320dp"
+        android:visibility="visible"
+        android:src="@drawable/logo_image"
         app:layout_constraintBottom_toTopOf="@+id/btn_check"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/btn_get"

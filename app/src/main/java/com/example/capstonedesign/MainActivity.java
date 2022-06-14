@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         permissionCheck();
 
         imageView = findViewById(R.id.imageView);
-        imageView.setVisibility(View.INVISIBLE);
+//        imageView.setVisibility(View.VISIBLE);
 
         test = (Button) findViewById(R.id.btn_test);
         test.setOnClickListener(new View.OnClickListener() {
@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        test.setVisibility(View.INVISIBLE);
         capture = (Button) findViewById(R.id.btn_capture);
         capture.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -218,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
                 // 갤러리에 이미지 파일 생성
                 galleryAddPic(currentPhotoUri, currentPhotoFileName);
                 imageView.setImageURI(newImageFileUri);
-                imageView.setVisibility(View.VISIBLE);
+//                imageView.setVisibility(View.VISIBLE);
                 check.setVisibility(View.VISIBLE);
                 imagePath = getPath(newImageFileUri);
             }
@@ -227,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
             getImageUri = data.getData();
 
             imageView.setImageURI(getImageUri);
-            imageView.setVisibility(View.VISIBLE);
+//            imageView.setVisibility(View.VISIBLE);
             check.setVisibility(View.VISIBLE);
             imagePath = getPath(getImageUri);
         }
